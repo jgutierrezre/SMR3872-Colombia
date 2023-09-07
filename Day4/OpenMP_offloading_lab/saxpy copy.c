@@ -15,6 +15,7 @@ static double wallclock() {
 }
 
 double* saxpy(int n, double a, double* x, double* y) {
+#pragma acc kernels
     for (int i = 0; i < n; i += 1) {
         y[i] = a * x[i] + y[i];
     }
@@ -46,7 +47,7 @@ int main(int argc, char* argv[]) {
     t_start = wallclock();
 
     saxpy(N, 2.0, x, y);
-    //printvec(N, saxpy(N, 2.0, x, y));
+    // printvec(N, saxpy(N, 2.0, x, y));
 
     printf("End SAXPY\nTime to execute: %10.3fs\n", wallclock() - t_start);
 

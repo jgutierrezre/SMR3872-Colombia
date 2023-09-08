@@ -1,12 +1,11 @@
-/*
-  TASK: Calculate a * X + Y using OpenMP offloading
-*/
 #include <ctype.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+
+#define CHUNK_SIZE (1 << 20)
 
 static double wallclock() {
     struct timeval t;
@@ -28,28 +27,30 @@ void printvec(int n, double* vec) {
 }
 
 int main(int argc, char* argv[]) {
-    // Your code goes here!
     int N = 1 << 30;
     double *x, *y;
     double t_start;
 
-    x = (double*)malloc(N * sizeof(double));
-    y = (double*)malloc(N * sizeof(double));
-
-    for (int i = 0; i < N; i += 1) {
-        x[i] = (double)i;
-        y[i] = 1.0;
-    }
+    x = (double*)malloc(CHUNK_SIZE * sizeof(double));
+    y = (double*)malloc(CHUNK_SIZE * sizeof(double));
 
     printf("Start SAXPY of length %d\n", N);
 
     t_start = wallclock();
 
-    saxpy(N, 2.0, x, y);
-    //printvec(N, saxpy(N, 2.0, x, y));
+    for (int i = 0; i < N; i += CHUNK_SIZE) {
+        int chunk_size = CHUNK_SIZE;
+        if (i + chunk_size > N) {
+            chunk_size = N - i;
+        }
+        for (int j = 0; j < chunk_size; j += 1) {
+            x[j] = (double)(i + j);
+            y[j] = 1.0;
+        }
+        saxpy(chunk_size, 2.0, x, y);
+    }
 
     printf("End SAXPY\nTime to execute: %10.3fs\n", wallclock() - t_start);
 
-    // printvec(N, saxpy(N, 2.0, x, y));
     return (0);
 }
